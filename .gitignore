@@ -22,3 +22,14 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# AI Helpers
+.agent/
+.claude/
+.codex/
+.cursor/
+.gemini/
+
+# Output folders
+_bmad/
+_bmad-output/
