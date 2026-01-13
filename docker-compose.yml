@@ -1,0 +1,84 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - db
+      - redis
+    networks:
+      - laravel-yt-dlp
+
+  web:
+    image: nginx:1.28.1
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+      - reverb
+    networks:
+      - laravel-yt-dlp
+
+  db:
+    image: postgres:17.7
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - laravel-yt-dlp
+
+  redis:
+    image: redis:8.4.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - laravel-yt-dlp
+
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan reverb:start
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+      - redis
+    ports:
+      - "6001:6001"
+    networks:
+      - laravel-yt-dlp
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan queue:work
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+      - db
+      - redis
+    networks:
+      - laravel-yt-dlp
+
+networks:
+  laravel-yt-dlp:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
