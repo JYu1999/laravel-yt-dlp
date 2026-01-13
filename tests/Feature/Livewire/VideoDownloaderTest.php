@@ -6,8 +6,12 @@ namespace Tests\Feature\Livewire;
 
 use App\Domain\Downloads\Services\VideoInfoService;
 use App\Domain\Downloads\Services\YtDlpService;
+use App\Domain\Downloads\Enums\DownloadStatus;
+use App\Domain\Downloads\Models\DownloadTask;
 use App\Livewire\VideoDownloader;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\TestCase;
 use Tests\Traits\HasFakeYtDlp;
@@ -15,6 +19,7 @@ use Tests\Traits\HasFakeYtDlp;
 final class VideoDownloaderTest extends TestCase
 {
     use HasFakeYtDlp;
+    use RefreshDatabase;
 
     public function testItValidatesUrl(): void
     {
@@ -107,5 +112,47 @@ final class VideoDownloaderTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSeeLivewire(VideoDownloader::class);
+    }
+
+    public function testItStartsDownloadAndStoresTaskId(): void
+    {
+        Queue::fake();
+
+        Livewire::test(VideoDownloader::class)
+            ->set('url', 'https://example.com/video')
+            ->set('metadata', [
+                'formats' => [
+                    ['format_id' => '22', 'ext' => 'mp4'],
+                ],
+            ])
+            ->set('selectedFormat', 'mp4')
+            ->call('startDownload')
+            ->assertSet('taskId', 1)
+            ->assertSet('downloadNotice', 'Download started. Task ID: 1');
+    }
+
+    public function testItShowsConcurrencyError(): void
+    {
+        Queue::fake();
+
+        DownloadTask::create([
+            'user_id' => null,
+            'ip_address' => '127.0.0.1',
+            'video_url' => 'https://example.com/first',
+            'format' => 'mp4',
+            'status' => DownloadStatus::pending,
+        ]);
+
+        Livewire::test(VideoDownloader::class)
+            ->set('url', 'https://example.com/second')
+            ->set('metadata', [
+                'formats' => [
+                    ['format_id' => '22', 'ext' => 'mp4'],
+                ],
+            ])
+            ->set('selectedFormat', 'mp4')
+            ->call('startDownload')
+            ->assertSet('downloadError', 'You already have an active download in progress.')
+            ->assertSet('taskId', null);
     }
 }

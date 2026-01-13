@@ -58,24 +58,38 @@ final class YtDlpIntegrationTest extends TestCase
     public function testItCanDownloadVideo(): void
     {
         $testUrl = getenv('YTDLP_TEST_URL') ?: null;
-        $outputPath = sys_get_temp_dir() . '/yt-dlp-test-' . uniqid('', true) . '.mp4';
-        $this->tempFiles[] = $outputPath;
+        $outputPath = sys_get_temp_dir() . '/yt-dlp-test-' . uniqid('', true);
+        $expectedPath = $outputPath . '.mp4';
+        $this->tempFiles[] = $expectedPath;
 
         if ($testUrl === null) {
             $binary = $this->createFakeBinary(
                 "#!/bin/sh\n" .
-                "if [ \"$1\" = \"-f\" ]; then\n" .
-                "  touch \"$4\"\n" .
-                "  exit 0\n" .
+                "# Find the -o argument value\n" .
+                "output=\"\"\n" .
+                "while [ \$# -gt 0 ]; do\n" .
+                "  if [ \"\$1\" = \"-o\" ]; then\n" .
+                "    output=\"\$2\"\n" .
+                "    break\n" .
+                "  fi\n" .
+                "  shift\n" .
+                "done\n" .
+                "\n" .
+                "if [ -z \"\$output\" ]; then\n" .
+                "  exit 1\n" .
                 "fi\n" .
-                "exit 1\n"
+                "\n" .
+                "resolved=\$(echo \"\$output\" | sed 's/%(ext)s/mp4/')\n" .
+                "touch \"\$resolved\"\n" .
+                "echo \"\$resolved\"\n" .
+                "exit 0\n"
             );
 
             $service = new YtDlpService($binary);
             $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath);
 
-            self::assertSame($outputPath, $result);
-            self::assertFileExists($outputPath);
+            self::assertSame($expectedPath, $result);
+            self::assertFileExists($expectedPath);
 
             return;
         }

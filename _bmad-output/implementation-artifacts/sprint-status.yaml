@@ -11,7 +11,7 @@ development_status:
   1-3-integrate-yt-dlp: done
   1-4-video-info-service: done
   1-5-download-page-ui: done
-  1-6-queue-system-download-job: backlog
+  1-6-queue-system-download-job: review
   1-7-reverb-real-time-progress: backlog
   1-8-file-streaming-delivery: backlog
   1-9-concurrency-control: backlog

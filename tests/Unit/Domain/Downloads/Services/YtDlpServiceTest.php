@@ -52,23 +52,112 @@ final class YtDlpServiceTest extends TestCase
     public function testItDownloadsVideoToOutputPath(): void
     {
         $outputPath = sys_get_temp_dir() . '/yt-dlp-output-' . uniqid('', true);
-        $this->tempFiles[] = $outputPath;
+        $expectedPath = $outputPath . '.mp4';
+        $this->tempFiles[] = $expectedPath;
 
         $binary = $this->createFakeBinary(
             "#!/bin/sh\n" .
-            "if [ \"$1\" = \"-f\" ]; then\n" .
-            "  touch \"$4\"\n" .
-            "  exit 0\n" .
-            "fi\n" .
-            "exit 1\n"
+            $this->createMockScript($expectedPath)
         );
 
         $service = new YtDlpService($binary);
 
         $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath);
 
-        self::assertSame($outputPath, $result);
-        self::assertFileExists($outputPath);
+        self::assertSame($expectedPath, $result);
+        self::assertFileExists($expectedPath);
+    }
+
+    public function testItDownloadsVideoWithMp4Format(): void
+    {
+        $outputPath = sys_get_temp_dir() . '/yt-dlp-mp4-' . uniqid('', true);
+        $expectedPath = $outputPath . '.mp4';
+        $this->tempFiles[] = $expectedPath;
+
+        $binary = $this->createFakeBinary(
+            "#!/bin/sh\n" .
+            "count=0\n" .
+            "for arg in \"$@\"; do\n" .
+            "  if [ \"\$arg\" = \"--recode-video\" ]; then\n" .
+            "    count=$((count+1))\n" .
+            "  fi\n" .
+            "  if [ \"\$arg\" = \"mp4\" ]; then\n" .
+            "    count=$((count+1))\n" .
+            "  fi\n" .
+            "done\n" .
+            "if [ \$count -lt 2 ]; then\n" .
+            "  echo \"Error: Missing --recode-video mp4\" >&2\n" .
+            "  exit 1\n" .
+            "fi\n" .
+            $this->createMockScript($expectedPath)
+        );
+
+        $service = new YtDlpService($binary);
+        
+        $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath, 'mp4');
+        
+        self::assertSame($expectedPath, $result);
+        self::assertFileExists($expectedPath);
+    }
+
+    public function testItDownloadsVideoWithSubtitles(): void
+    {
+        $outputPath = sys_get_temp_dir() . '/yt-dlp-subs-' . uniqid('', true);
+        $expectedPath = $outputPath . '.mp4';
+        $this->tempFiles[] = $expectedPath;
+
+        $binary = $this->createFakeBinary(
+            "#!/bin/sh\n" .
+            "has_subs=0\n" .
+            "has_langs=0\n" .
+            "for arg in \"$@\"; do\n" .
+            "  if [ \"\$arg\" = \"--write-subs\" ]; then\n" .
+            "    has_subs=1\n" .
+            "  fi\n" .
+            "  if [ \"\$arg\" = \"en,zh\" ]; then\n" .
+            "    has_langs=1\n" .
+            "  fi\n" .
+            "done\n" .
+            "if [ \$has_subs -eq 0 ] || [ \$has_langs -eq 0 ]; then\n" .
+            "  echo \"Error: Missing subtitle args\" >&2\n" .
+            "  exit 1\n" .
+            "fi\n" .
+            $this->createMockScript($expectedPath)
+        );
+
+        $service = new YtDlpService($binary);
+        
+        $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath, null, [
+            'subtitles' => true,
+            'subtitle_langs' => ['en', 'zh'],
+        ]);
+        
+        self::assertSame($expectedPath, $result);
+        self::assertFileExists($expectedPath);
+    }
+
+    private function createMockScript(string $outputPath): string
+    {
+        return 
+            "# Find the -o argument value\n" .
+            "output=\"\"\n" .
+            "while [ \$# -gt 0 ]; do\n" .
+            "  if [ \"\$1\" = \"-o\" ]; then\n" .
+            "    output=\"\$2\"\n" .
+            "    break\n" .
+            "  fi\n" .
+            "  shift\n" .
+            "done\n" .
+            "\n" .
+            "if [ -z \"\$output\" ]; then\n" .
+            "  echo \"Error: No output path specified\" >&2\n" .
+            "  exit 1\n" .
+            "fi\n" .
+            "\n" .
+            "# Create the file\n" .
+            "touch \"$outputPath\"\n" .
+            "echo \"$outputPath\"\n" .
+            "exit 0\n";
     }
 
     public function testItRejectsInvalidUrls(): void

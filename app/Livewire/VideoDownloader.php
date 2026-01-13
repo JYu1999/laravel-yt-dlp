@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Domain\Downloads\DTO\VideoMetadata;
+use App\Domain\Downloads\Actions\CreateDownload;
+use App\Domain\Downloads\Exceptions\DownloadConcurrencyException;
 use App\Domain\Downloads\Services\VideoInfoService;
 use App\Http\Requests\VideoInfoRequest;
 use Illuminate\View\View;
@@ -33,6 +35,10 @@ final class VideoDownloader extends Component
 
     public ?string $downloadNotice = null;
 
+    public ?string $downloadError = null;
+
+    public ?int $taskId = null;
+
     /**
      * @return array<string, array<int, string>>
      */
@@ -58,6 +64,8 @@ final class VideoDownloader extends Component
         $this->resetErrorBag();
         $this->error = null;
         $this->downloadNotice = null;
+        $this->downloadError = null;
+        $this->taskId = null;
         $this->metadata = [];
         $this->selectedFormat = null;
         $this->selectedLanguage = null;
@@ -82,14 +90,32 @@ final class VideoDownloader extends Component
         }
     }
 
-    public function startDownload(): void
+    public function startDownload(CreateDownload $createDownload): void
     {
         $this->resetErrorBag();
         $this->downloadNotice = null;
+        $this->downloadError = null;
+        $this->taskId = null;
 
         $this->validate($this->downloadRules(), $this->downloadMessages());
 
-        $this->downloadNotice = 'Download request validated.';
+        try {
+            $task = $createDownload->handle(
+                url: $this->url,
+                format: (string) $this->selectedFormat,
+                ipAddress: request()->ip() ?? '0.0.0.0',
+                userId: auth()->id(),
+                options: [
+                    'subtitles' => $this->downloadSubtitles,
+                    'subtitle_langs' => $this->selectedLanguage ? [$this->selectedLanguage] : [],
+                ],
+            );
+
+            $this->taskId = $task->id;
+            $this->downloadNotice = 'Download started. Task ID: ' . $task->id;
+        } catch (DownloadConcurrencyException $exception) {
+            $this->downloadError = $exception->getMessage();
+        }
     }
 
     public function updatedDownloadSubtitles(bool $value): void

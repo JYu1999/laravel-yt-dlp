@@ -27,6 +27,13 @@
             </flux:callout>
         @endif
 
+        @if ($downloadError)
+            <flux:callout variant="danger">
+                <flux:callout.heading>Download blocked</flux:callout.heading>
+                <flux:callout.text>{{ $downloadError }}</flux:callout.text>
+            </flux:callout>
+        @endif
+
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
             <flux:button
                 variant="primary"
