@@ -55,10 +55,8 @@ final class VideoDownloaderTest extends TestCase
             ->assertSet('metadata.id', 'abc123')
             ->assertSet('metadata.title', 'Test Video')
             ->assertSet('metadata.duration_formatted', '01:01:01')
-            ->assertSet('selectedFormat', 'mp4')
-            ->assertSet('selectedLanguage', 'en')
-            ->assertSeeHtml('<option value="mp4">MP4</option>')
-            ->assertDontSeeHtml('<option value="mov">MOV</option>'); // MOV not in mock data
+            ->assertSet('selectedLanguage', 'en');
+            // Format assertions removed as format selection is now hidden
     }
 
     public function testItTogglesSubtitleVisibility(): void
@@ -76,20 +74,7 @@ final class VideoDownloaderTest extends TestCase
             ->assertSeeHtml('<option value="fr">fr</option>');
     }
 
-    public function testItValidatesSelectedFormatOnDownload(): void
-    {
-        Livewire::test(VideoDownloader::class)
-            ->set('metadata', [
-                'formats' => [
-                    ['format_id' => '22', 'ext' => 'mp4'],
-                    ['format_id' => '18', 'ext' => 'mov'],
-                ],
-                'subtitles' => ['en'],
-            ])
-            ->set('selectedFormat', 'avi')
-            ->call('startDownload')
-            ->assertHasErrors(['selectedFormat']);
-    }
+    // Removed testItValidatesSelectedFormatOnDownload as format selection is removed
 
     public function testItRequiresSubtitleLanguageWhenSubtitlesRequested(): void
     {
@@ -100,7 +85,6 @@ final class VideoDownloaderTest extends TestCase
                 ],
                 'subtitles' => ['en', 'zh-Hans'],
             ])
-            ->set('selectedFormat', 'mp4')
             ->set('downloadSubtitles', true)
             ->set('selectedLanguage', '')
             ->call('startDownload')
@@ -125,7 +109,6 @@ final class VideoDownloaderTest extends TestCase
                     ['format_id' => '22', 'ext' => 'mp4'],
                 ],
             ])
-            ->set('selectedFormat', 'mp4')
             ->call('startDownload')
             ->assertSet('taskId', 1)
             ->assertSet('downloadNotice', 'Download started. Task ID: 1');
@@ -150,7 +133,6 @@ final class VideoDownloaderTest extends TestCase
                     ['format_id' => '22', 'ext' => 'mp4'],
                 ],
             ])
-            ->set('selectedFormat', 'mp4')
             ->call('startDownload')
             ->assertSet('downloadError', 'You already have an active download in progress.')
             ->assertSet('taskId', null);

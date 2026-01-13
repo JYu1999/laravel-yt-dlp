@@ -67,17 +67,6 @@
                 </div>
             </div>
 
-            <flux:field>
-                <flux:label for="format">Format</flux:label>
-                <flux:select id="format" wire:model.live="selectedFormat">
-                    <option value="">Select a format</option>
-                    @foreach ($this->formatOptions as $format)
-                        <option value="{{ $format }}">{{ strtoupper($format) }}</option>
-                    @endforeach
-                </flux:select>
-                <flux:error name="selectedFormat" />
-            </flux:field>
-
             <div class="space-y-2">
                 <flux:field variant="inline">
                     <flux:checkbox wire:model.live="downloadSubtitles" />

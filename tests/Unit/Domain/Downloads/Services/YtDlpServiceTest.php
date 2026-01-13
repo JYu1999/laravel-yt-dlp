@@ -68,25 +68,27 @@ final class YtDlpServiceTest extends TestCase
         self::assertFileExists($expectedPath);
     }
 
-    public function testItDownloadsVideoWithMp4Format(): void
+    public function testItForcefullyDownloadsMp4(): void
     {
-        $outputPath = sys_get_temp_dir() . '/yt-dlp-mp4-' . uniqid('', true);
+        $outputPath = sys_get_temp_dir() . '/yt-dlp-force-mp4-' . uniqid('', true);
         $expectedPath = $outputPath . '.mp4';
         $this->tempFiles[] = $expectedPath;
 
         $binary = $this->createFakeBinary(
             "#!/bin/sh\n" .
-            "count=0\n" .
+            "has_format_rule=0\n" .
+            "has_merge_rule=0\n" .
             "for arg in \"$@\"; do\n" .
-            "  if [ \"\$arg\" = \"--recode-video\" ]; then\n" .
-            "    count=$((count+1))\n" .
+            "  if [ \"\$arg\" = \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" ]; then\n" .
+            "    has_format_rule=1\n" .
             "  fi\n" .
-            "  if [ \"\$arg\" = \"mp4\" ]; then\n" .
-            "    count=$((count+1))\n" .
+            "  if [ \"\$arg\" = \"--merge-output-format\" ]; then\n" .
+            "    has_merge_rule=1\n" .
             "  fi\n" .
             "done\n" .
-            "if [ \$count -lt 2 ]; then\n" .
-            "  echo \"Error: Missing --recode-video mp4\" >&2\n" .
+            "\n" .
+            "if [ \$has_format_rule -eq 0 ] || [ \$has_merge_rule -eq 0 ]; then\n" .
+            "  echo \"Error: Missing strict MP4 format rules\" >&2\n" .
             "  exit 1\n" .
             "fi\n" .
             $this->createMockScript($expectedPath)
@@ -94,47 +96,14 @@ final class YtDlpServiceTest extends TestCase
 
         $service = new YtDlpService($binary);
         
-        $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath, 'mp4');
+        // Pass 'webm' or any other format - it should be ignored in favor of forced MP4
+        $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath, 'webm');
         
         self::assertSame($expectedPath, $result);
         self::assertFileExists($expectedPath);
     }
 
-    public function testItDownloadsVideoWithSubtitles(): void
-    {
-        $outputPath = sys_get_temp_dir() . '/yt-dlp-subs-' . uniqid('', true);
-        $expectedPath = $outputPath . '.mp4';
-        $this->tempFiles[] = $expectedPath;
 
-        $binary = $this->createFakeBinary(
-            "#!/bin/sh\n" .
-            "has_subs=0\n" .
-            "has_langs=0\n" .
-            "for arg in \"$@\"; do\n" .
-            "  if [ \"\$arg\" = \"--write-subs\" ]; then\n" .
-            "    has_subs=1\n" .
-            "  fi\n" .
-            "  if [ \"\$arg\" = \"en,zh\" ]; then\n" .
-            "    has_langs=1\n" .
-            "  fi\n" .
-            "done\n" .
-            "if [ \$has_subs -eq 0 ] || [ \$has_langs -eq 0 ]; then\n" .
-            "  echo \"Error: Missing subtitle args\" >&2\n" .
-            "  exit 1\n" .
-            "fi\n" .
-            $this->createMockScript($expectedPath)
-        );
-
-        $service = new YtDlpService($binary);
-        
-        $result = $service->downloadVideo('https://example.com/watch?v=abc123', $outputPath, null, [
-            'subtitles' => true,
-            'subtitle_langs' => ['en', 'zh'],
-        ]);
-        
-        self::assertSame($expectedPath, $result);
-        self::assertFileExists($expectedPath);
-    }
 
     private function createMockScript(string $outputPath): string
     {

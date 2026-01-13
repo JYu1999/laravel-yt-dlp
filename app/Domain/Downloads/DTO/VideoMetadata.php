@@ -70,9 +70,10 @@ final readonly class VideoMetadata
             $ext = strtolower((string) ($format['ext'] ?? ''));
             $vcodec = strtolower((string) ($format['vcodec'] ?? ''));
 
-            if (!in_array($ext, ['mp4', 'mov'], true)) {
-                continue;
-            }
+            // Removed strict format filtering to allow all video formats
+            // if (!in_array($ext, ['mp4', 'mov'], true)) {
+            //    continue;
+            // }
 
             if ($vcodec === '' || $vcodec === 'none') {
                 continue;

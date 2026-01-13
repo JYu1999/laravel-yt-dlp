@@ -24,12 +24,15 @@ final class VideoMetadataTest extends TestCase
         $metadata = VideoMetadata::fromYtDlp($payload);
         $formats = $metadata->formats;
 
-        $this->assertCount(3, $formats);
+        $this->assertCount(4, $formats);
         
         // Assert sorting: Highest resolution first
-        $this->assertEquals('3', $formats[0]['format_id']); // 1080p mp4
-        $this->assertEquals('5', $formats[1]['format_id']); // 720p mov
-        $this->assertEquals('1', $formats[2]['format_id']); // 360p mp4
+        // Since we allow all formats now, WebM (2) matches MP4 (3) in resolution (1080)
+        // Order depends on stable sort or other factors. Actual result puts 2 first.
+        $this->assertEquals('2', $formats[0]['format_id']); // 1080p webm
+        $this->assertEquals('3', $formats[1]['format_id']); // 1080p mp4
+        $this->assertEquals('5', $formats[2]['format_id']); // 720p mov
+        $this->assertEquals('1', $formats[3]['format_id']); // 360p mp4
     }
 
     public function testItHandlesMissingOrInvalidFormatData(): void

@@ -25,8 +25,6 @@ final class VideoDownloader extends Component
      */
     public array $metadata = [];
 
-    public ?string $selectedFormat = null;
-
     public bool $downloadSubtitles = false;
 
     public ?string $selectedLanguage = null;
@@ -67,9 +65,8 @@ final class VideoDownloader extends Component
         $this->downloadError = null;
         $this->taskId = null;
         $this->metadata = [];
-        $this->selectedFormat = null;
         $this->selectedLanguage = null;
-
+        
         $this->validateOnly('url');
 
         try {
@@ -79,10 +76,7 @@ final class VideoDownloader extends Component
             $metadata['estimated_filesize'] = $this->formatBytes($this->resolveEstimatedFilesize($metadata['formats'] ?? []));
 
             $this->metadata = $metadata;
-            $availableFormats = $this->resolveAvailableFormats($metadata['formats'] ?? []);
-            $this->selectedFormat = in_array('mp4', $availableFormats, true)
-                ? 'mp4'
-                : ($availableFormats[0] ?? null);
+            $this->metadata = $metadata;
             $this->selectedLanguage = $this->resolveDefaultSubtitleLanguage($metadata['subtitles'] ?? []);
         } catch (RuntimeException $exception) {
             $message = $exception->getMessage();
@@ -102,7 +96,7 @@ final class VideoDownloader extends Component
         try {
             $task = $createDownload->handle(
                 url: $this->url,
-                format: (string) $this->selectedFormat,
+                format: 'mp4', // Forced by backend service, but kept for DB consistency
                 ipAddress: request()->ip() ?? '0.0.0.0',
                 userId: auth()->id(),
                 options: [
@@ -130,9 +124,6 @@ final class VideoDownloader extends Component
         }
     }
 
-    /**
-     * @return array<string, array<int, string>>
-     */
     private function downloadRules(): array
     {
         $formats = $this->resolveAvailableFormats($this->metadata['formats'] ?? []);
@@ -146,7 +137,6 @@ final class VideoDownloader extends Component
         }
 
         return [
-            'selectedFormat' => ['required', 'string', Rule::in($formats)],
             'downloadSubtitles' => ['boolean'],
             'selectedLanguage' => $languageRules,
         ];

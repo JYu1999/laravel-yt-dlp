@@ -63,20 +63,13 @@ final class YtDlpService
             '--no-colors',
         ];
 
-        // Format Selection Logic
-        if ($format === 'mp4') {
-            // Force MP4 if requested
-            $command = array_merge($command, [
-                '-S', 'res,ext:mp4:m4a',
-                '--recode-video', 'mp4',
-            ]);
-        } else {
-            // Default behavior: Best video + Best audio / Best
-            $command = array_merge($command, [
-                '-f', 'bestvideo*+bestaudio/best',
-                '--merge-output-format', 'mp4', // Merge into mp4 container if possible
-            ]);
-        }
+        // Format Selection Logic: Force MP4
+        // We prioritize native MP4 video (h264) + m4a audio (aac) to avoid slow transcoding.
+        // Fallback to best mp4 container, then generic best.
+        $command = array_merge($command, [
+            '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            '--merge-output-format', 'mp4',
+        ]);
 
         // Subtitle Logic
         if (!empty($options['subtitles'])) {

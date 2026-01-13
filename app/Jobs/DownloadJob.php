@@ -24,6 +24,13 @@ final class DownloadJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 3600;
+
     public function __construct(public readonly DownloadTask $task)
     {
     }
