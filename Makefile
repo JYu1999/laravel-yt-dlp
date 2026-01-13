@@ -20,3 +20,6 @@ migrate-fresh:
 
 frontend:
 	docker compose run --rm node sh -lc "npm ci && npm run build"
+
+worker-restart:
+	docker compose restart worker

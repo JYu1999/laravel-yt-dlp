@@ -89,6 +89,8 @@ final class YtDlpService
             }
             $command[] = '--sub-langs';
             $command[] = $langs;
+            $command[] = '--convert-subs';
+            $command[] = 'srt';
         }
 
         // Output Template & Path
