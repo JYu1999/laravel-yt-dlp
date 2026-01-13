@@ -51,7 +51,24 @@ final class VideoDownloaderTest extends TestCase
             ->assertSet('metadata.title', 'Test Video')
             ->assertSet('metadata.duration_formatted', '01:01:01')
             ->assertSet('selectedFormat', 'mp4')
-            ->assertSet('selectedLanguage', 'en');
+            ->assertSet('selectedLanguage', 'en')
+            ->assertSeeHtml('<option value="mp4">MP4</option>')
+            ->assertDontSeeHtml('<option value="mov">MOV</option>'); // MOV not in mock data
+    }
+
+    public function testItTogglesSubtitleVisibility(): void
+    {
+        Livewire::test(VideoDownloader::class)
+            ->set('metadata', [
+                'formats' => [['format_id' => '22', 'ext' => 'mp4']],
+                'subtitles' => ['en', 'fr'],
+            ])
+            ->set('downloadSubtitles', false)
+            ->assertDontSeeHtml('Subtitle Language')
+            ->set('downloadSubtitles', true)
+            ->assertSeeHtml('Subtitle Language')
+            ->assertSeeHtml('<option value="en">en</option>')
+            ->assertSeeHtml('<option value="fr">fr</option>');
     }
 
     public function testItValidatesSelectedFormatOnDownload(): void
