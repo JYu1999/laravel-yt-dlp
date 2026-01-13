@@ -1,6 +1,6 @@
 # Story 1.5: Download Page UI
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -89,6 +89,7 @@ so that I can customize my download (format, subtitles) and start the process ea
 - 2026-01-14: Restored Tailwind `@import` flow with explicit sources/exclusions to fix styles without stray tokens.
 - 2026-01-14: Applied Flux theme variables, default dark mode, and boosted download confirmation visibility.
 - 2026-01-14: Added a Node 24 service with a dedicated `node_modules` volume and updated `make build` to run `npm ci`.
+- 2026-01-14: [Code Review] Refactored `VideoDownloader` view logic to computed property, added `VideoMetadata` unit tests, and enhanced `VideoDownloaderTest` with UI assertions.
 
 ## Dev Agent Record
 
@@ -109,6 +110,9 @@ GPT-5
 - Applied Flux theme variables, default dark mode, and increased download-ready callout prominence.
 - Switched `make build` to use a Node container with a persistent `node_modules` volume and `npm ci`.
 - Restored Tailwind `@import` flow with explicit sources/exclusions; updated subtitle checkbox label rendering.
+- [Code Review] Refactored `VideoDownloader` to use `getFormatOptionsProperty` instead of inline Blade logic.
+- [Code Review] Added `tests/Unit/Domain/Downloads/DTO/VideoMetadataTest.php` to cover business logic.
+- [Code Review] Added UI visibility assertions to `VideoDownloaderTest` (format options, conditional subtitle dropdown).
 
 ### File List
 
