@@ -37,7 +37,7 @@ story_location: "_bmad-output/implementation-artifacts"
 development_status:
   epic-1: in-progress
   1-1-init-project-livewire-starter-kit: done
-  1-2-configure-docker-compose: review
+  1-2-configure-docker-compose: done
   1-3-integrate-yt-dlp: backlog
   1-4-video-info-service: backlog
   1-5-download-page-ui: backlog
