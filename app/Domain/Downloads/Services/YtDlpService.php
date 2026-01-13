@@ -39,7 +39,7 @@ final class YtDlpService
             '--skip-download',
             $url,
         ]);
-        $process->setTimeout(60);
+        $process->setTimeout(5);
 
         $output = $this->runProcess($process);
         $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
