@@ -30,6 +30,3 @@ Thumbs.db
 .cursor/
 .gemini/
 
-# Output folders
-_bmad/
-_bmad-output/
