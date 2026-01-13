@@ -1,0 +1,96 @@
+# generated: 2026-01-13
+# project: laravel-yt-dlp
+# project_key: laravel-yt-dlp
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Mark epic as 'in-progress' when starting work on its first story
+# - SM typically creates next story ONLY after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then Dev runs code-review (fresh context, ideally different LLM)
+
+generated: 2026-01-13
+project: laravel-yt-dlp
+project_key: laravel-yt-dlp
+tracking_system: file-system
+story_location: "_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-init-project-livewire-starter-kit: done
+  1-2-configure-docker-compose: backlog
+  1-3-integrate-yt-dlp: backlog
+  1-4-video-info-service: backlog
+  1-5-download-page-ui: backlog
+  1-6-queue-system-download-job: backlog
+  1-7-reverb-real-time-progress: backlog
+  1-8-file-streaming-delivery: backlog
+  1-9-concurrency-control: backlog
+  1-10-basic-admin-access: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-configure-fortify-auth: backlog
+  2-2-user-registration-verification: backlog
+  2-3-user-login-session: backlog
+  2-4-anonymous-access-roles: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-anonymous-quota: backlog
+  3-2-registered-quota: backlog
+  3-3-quota-display-ui: backlog
+  3-4-quota-auto-reset: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-user-agent-detection: backlog
+  4-2-captcha-verification: backlog
+  4-3-ip-association-limit: backlog
+  4-4-abuse-monitoring-alerting: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-admin-dashboard-framework: backlog
+  5-2-daily-stats: backlog
+  5-3-system-status: backlog
+  5-4-revenue-ad-stats: backlog
+  5-5-error-logs: backlog
+  5-6-user-details: backlog
+  5-7-block-user: backlog
+  5-8-block-ip: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-integrate-adsense: backlog
+  6-2-role-based-ads: backlog
+  6-3-terms-disclaimer-pages: backlog
+  6-4-user-agreement-confirmation: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-system-announcements: backlog
+  7-2-data-retention-policy: backlog
+  7-3-download-record-cleanup: backlog
+  7-4-log-ip-cleanup: backlog
+  7-5-yt-dlp-version-mgmt: backlog
+  epic-7-retrospective: optional
