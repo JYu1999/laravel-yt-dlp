@@ -60,19 +60,11 @@
                 </div>
             </div>
 
-            @php
-                $formatOptions = collect($metadata['formats'] ?? [])
-                    ->pluck('ext')
-                    ->filter()
-                    ->unique()
-                    ->values();
-            @endphp
-
             <flux:field>
                 <flux:label for="format">Format</flux:label>
                 <flux:select id="format" wire:model.live="selectedFormat">
                     <option value="">Select a format</option>
-                    @foreach ($formatOptions as $format)
+                    @foreach ($this->formatOptions as $format)
                         <option value="{{ $format }}">{{ strtoupper($format) }}</option>
                     @endforeach
                 </flux:select>

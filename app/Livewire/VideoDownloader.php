@@ -14,6 +14,8 @@ use RuntimeException;
 
 final class VideoDownloader extends Component
 {
+    private const FALLBACK_LANGUAGES = ['en', 'en-US', 'en-GB', 'zh', 'zh-Hans', 'zh-Hant', 'zh-CN', 'zh-TW'];
+
     public string $url = '';
 
     /**
@@ -214,7 +216,7 @@ final class VideoDownloader extends Component
             }
         }
 
-        foreach (['en', 'en-US', 'en-GB', 'zh', 'zh-Hans', 'zh-Hant', 'zh-CN', 'zh-TW'] as $fallback) {
+        foreach (self::FALLBACK_LANGUAGES as $fallback) {
             if (in_array($fallback, $languages, true)) {
                 return $fallback;
             }
@@ -267,6 +269,16 @@ final class VideoDownloader extends Component
         }
 
         return sprintf('%.2f %s', $value, $units[$index]);
+    }
+
+    public function getFormatOptionsProperty(): array
+    {
+        return collect($this->metadata['formats'] ?? [])
+            ->pluck('ext')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function render(): View
