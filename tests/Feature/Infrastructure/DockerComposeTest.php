@@ -26,6 +26,19 @@ final class DockerComposeTest extends TestCase
         $this->assertStringContainsString('intl', $contents);
     }
 
+    public function testDockerPhpDockerfileInstallsYtDlp(): void
+    {
+        $dockerfilePath = base_path('docker/php/Dockerfile');
+
+        $this->assertFileExists($dockerfilePath);
+
+        $contents = file_get_contents($dockerfilePath);
+
+        $this->assertNotFalse($contents);
+        $this->assertStringContainsString('yt-dlp', $contents);
+        $this->assertStringContainsString('/usr/local/bin/yt-dlp', $contents);
+    }
+
     public function testNginxConfigExistsAndHasPhpAndReverbProxying(): void
     {
         $nginxConfigPath = base_path('docker/nginx/conf.d/default.conf');
