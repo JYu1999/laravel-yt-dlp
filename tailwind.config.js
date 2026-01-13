@@ -8,6 +8,7 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
     ],
+    blocklist: ['file:line', '[file:line]'],
 
     theme: {
         extend: {

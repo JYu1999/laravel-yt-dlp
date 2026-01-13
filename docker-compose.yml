@@ -24,6 +24,15 @@ services:
     networks:
       - laravel-yt-dlp
 
+  node:
+    image: node:24
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    networks:
+      - laravel-yt-dlp
+
   db:
     image: postgres:17.7
     environment:
@@ -82,3 +91,4 @@ networks:
 volumes:
   pgdata:
   redisdata:
+  node_modules:

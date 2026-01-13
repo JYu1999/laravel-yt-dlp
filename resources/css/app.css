@@ -1,4 +1,26 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
-
 @custom-variant dark (&:where(.dark, .dark *));
+
+@source "../views";
+@source "../views/flux";
+@source "../js";
+@source "../../storage/framework/views";
+@source "../../vendor/livewire/flux/stubs/resources/views";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views";
+@source not "../../_bmad/**";
+@source not "../../_bmad-output/**";
+
+@theme {
+    --color-accent: var(--color-rose-500);
+    --color-accent-content: var(--color-rose-500);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-rose-500);
+        --color-accent-content: var(--color-rose-400);
+        --color-accent-foreground: var(--color-white);
+    }
+}

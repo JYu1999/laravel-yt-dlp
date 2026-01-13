@@ -50,6 +50,45 @@ final class VideoDownloaderTest extends TestCase
             ->assertSet('metadata.id', 'abc123')
             ->assertSet('metadata.title', 'Test Video')
             ->assertSet('metadata.duration_formatted', '01:01:01')
-            ->assertSet('selectedFormat', '22');
+            ->assertSet('selectedFormat', 'mp4')
+            ->assertSet('selectedLanguage', 'en');
+    }
+
+    public function testItValidatesSelectedFormatOnDownload(): void
+    {
+        Livewire::test(VideoDownloader::class)
+            ->set('metadata', [
+                'formats' => [
+                    ['format_id' => '22', 'ext' => 'mp4'],
+                    ['format_id' => '18', 'ext' => 'mov'],
+                ],
+                'subtitles' => ['en'],
+            ])
+            ->set('selectedFormat', 'avi')
+            ->call('startDownload')
+            ->assertHasErrors(['selectedFormat']);
+    }
+
+    public function testItRequiresSubtitleLanguageWhenSubtitlesRequested(): void
+    {
+        Livewire::test(VideoDownloader::class)
+            ->set('metadata', [
+                'formats' => [
+                    ['format_id' => '22', 'ext' => 'mp4'],
+                ],
+                'subtitles' => ['en', 'zh-Hans'],
+            ])
+            ->set('selectedFormat', 'mp4')
+            ->set('downloadSubtitles', true)
+            ->set('selectedLanguage', '')
+            ->call('startDownload')
+            ->assertHasErrors(['selectedLanguage']);
+    }
+
+    public function testHomePageRendersDownloader(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSeeLivewire(VideoDownloader::class);
     }
 }
