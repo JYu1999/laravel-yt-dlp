@@ -75,8 +75,9 @@ workflow_status:
         name: "Architecture Document"
         agent: "architect"
         command: "/bmad:bmm:workflows:create-architecture"
-        status: "required"
-        output: "System architecture document"
+        status: "_bmad-output/planning-artifacts/architecture.md"
+        output: "_bmad-output/planning-artifacts/architecture.md"
+        completed_at: "2026-01-13T18:18:26+0800"
         note: "Complete system design for greenfield projects"
 
       - id: "create-epics-and-stories"
