@@ -45,6 +45,8 @@ echo
 
 echo "### Starting nginx ..."
 docker compose -f docker-compose.prod.yml up --force-recreate -d web
+echo "Waiting for Nginx to start..."
+sleep 10
 echo
 
 echo "### Deleting dummy certificate for $domains ..."

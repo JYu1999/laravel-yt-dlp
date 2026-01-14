@@ -16,7 +16,7 @@ services:
       APP_DEBUG: false
 
   web:
-    image: nginx:1.28.1
+    image: nginx:alpine
     restart: always
     ports:
       - "80:80"
