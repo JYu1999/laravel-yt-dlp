@@ -57,3 +57,106 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Deployment Guide for AWS EC2
+
+This guide details the steps to deploy the Laravel Video Downloader application to an AWS EC2 instance with Docker and forced HTTPS.
+
+### Prerequisites
+
+1.  **AWS EC2 Instance**:
+    - Recommended OS: Ubuntu 22.04 LTS or 24.04 LTS.
+    - Instance Type: t3.small or larger (for memory/CPU relative to video processing).
+    - Security Group Inbound Rules:
+        - SSH (22) - Your IP
+        - HTTP (80) - Anywhere (0.0.0.0/0)
+        - HTTPS (443) - Anywhere (0.0.0.0/0)
+
+2.  **Domain Name**:
+    - Point the A record for `ytd.jyu1999.com` to your EC2 instance's Public IP address.
+
+### Step 1: Server Setup
+
+SSH into your EC2 instance:
+```bash
+ssh -i /path/to/your/key.pem ubuntu@your-ec2-ip
+```
+
+Install Docker and Docker Compose:
+```bash
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+# Install Docker packages:
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Allow running docker without sudo (re-login required after this):
+sudo usermod -aG docker $USER
+```
+*Logout and login again for group changes to take effect.*
+
+### Step 2: Application Setup
+
+Clone the repository:
+```bash
+git clone https://github.com/your-username/laravel-yt-dlp.git
+cd laravel-yt-dlp
+```
+
+Configure Environment Variables:
+```bash
+cp .env.example .env
+nano .env
+```
+> [!IMPORTANT]
+> Update the following `.env` variables for production:
+> - `APP_ENV=production`
+> - `APP_DEBUG=false`
+> - `APP_URL=https://ytd.jyu1999.com`
+> - `DB_PASSWORD=your_secure_password`
+> - `REDIS_PASSWORD=your_secure_redis_password` (if applicable)
+> - `REVERB_APP_KEY`, `REVERB_APP_SECRET` (generate strong random strings)
+
+### Step 3: SSL Initialization
+
+Run the helper script to generate Let's Encrypt certificates. This script creates a dummy certificate, starts Nginx, requests the real certificate, and then reloads Nginx.
+
+```bash
+chmod +x init-letsencrypt.sh
+./init-letsencrypt.sh
+```
+Follow the prompts if asked (you shouldn't need to do much as it is automated).
+
+### Step 4: First Deployment
+
+Run the deploy script to build containers, run migrations, and optimize:
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### Step 5: Verification
+
+1.  Open [https://ytd.jyu1999.com](https://ytd.jyu1999.com) in your browser.
+2.  Ensure you are redirected to HTTPS.
+3.  Check the padlock icon to verify the SSL certificate.
+4.  Login and test downloading a video to ensure `yt-dlp` and Reverb (WebSockets) are working.
+
+### Subsequent Updates
+
+To deploy new changes in the future, simply SSH into the server and run:
+```bash
+cd laravel-yt-dlp
+./deploy.sh
+```
