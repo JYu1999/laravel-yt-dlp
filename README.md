@@ -110,7 +110,7 @@ sudo usermod -aG docker $USER
 
 Clone the repository:
 ```bash
-git clone https://github.com/your-username/laravel-yt-dlp.git
+git clone https://github.com/jyu1999/laravel-yt-dlp.git
 cd laravel-yt-dlp
 ```
 
