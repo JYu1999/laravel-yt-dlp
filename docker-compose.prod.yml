@@ -69,6 +69,7 @@ services:
       - redisdata:/data
     networks:
       - laravel-yt-dlp
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
 
   reverb:
     build:
