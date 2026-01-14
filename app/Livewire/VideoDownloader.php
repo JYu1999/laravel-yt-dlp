@@ -12,6 +12,7 @@ use App\Domain\Downloads\Services\VideoInfoService;
 use App\Http\Requests\VideoInfoRequest;
 use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use RuntimeException;
@@ -94,7 +95,8 @@ final class VideoDownloader extends Component
             $this->selectedLanguage = $this->resolveDefaultSubtitleLanguage($metadata['subtitles'] ?? []);
         } catch (RuntimeException $exception) {
             $message = $exception->getMessage();
-            $this->error = $this->resolveFriendlyError($message);
+            Log::error('Metadata fetch failed: ' . $message);
+            $this->error = $this->resolveFriendlyError($message) . ' (Debug: ' . $message . ')';
         }
     }
 
