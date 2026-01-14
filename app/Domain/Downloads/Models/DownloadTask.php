@@ -15,6 +15,11 @@ final class DownloadTask extends Model
     /** @use HasFactory<\Database\Factories\DownloadTaskFactory> */
     use HasFactory;
 
+    protected static function newFactory()
+    {
+        return \Database\Factories\DownloadTaskFactory::new();
+    }
+
     /**
      * @var list<string>
      */

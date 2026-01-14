@@ -114,14 +114,6 @@
                             <span>Failed</span>
                         @endif
                     </div>
-                    @if ($downloadUrl)
-                        <a
-                            href="{{ $downloadUrl }}"
-                            class="inline-flex items-center text-sm font-semibold text-rose-200 underline underline-offset-4"
-                        >
-                            Download video
-                        </a>
-                    @endif
                     @if ($subtitleUrls !== [])
                         <div class="flex flex-wrap gap-3 text-sm">
                             @foreach ($subtitleUrls as $subtitleUrl)
@@ -155,6 +147,17 @@
                 }
             };
 
+            const triggerDownload = (url) => {
+                if (!url) return;
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', '');
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => document.body.removeChild(link), 1000);
+            };
+
             const handlePollingPayload = (payload) => {
                 if (!payload || !payload.status) {
                     return;
@@ -163,6 +166,11 @@
                 if (payload.status === 'completed') {
                     Livewire.dispatch('download-completed', { payload: payload });
                     stopPolling();
+                    
+                    // Trigger auto-download only for video
+                    if (payload.download_url) {
+                        triggerDownload(payload.download_url);
+                    }
                     return;
                 }
 
@@ -234,6 +242,11 @@
 
                 channel.listen('.download.completed', (payload) => {
                     Livewire.dispatch('download-completed', { payload: payload });
+                    
+                    // Trigger auto-download only for video
+                    if (payload.download_url) {
+                        triggerDownload(payload.download_url);
+                    }
                 });
 
                 channel.listen('.download.failed', (payload) => {

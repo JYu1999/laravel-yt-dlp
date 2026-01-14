@@ -11,11 +11,9 @@ final class SubtitleUrlResolver
     private const SUBTITLE_EXTENSIONS = ['srt', 'vtt', 'ass', 'ssa'];
 
     /**
-     * Resolve subtitle URLs for a given file path.
-     *
      * @return array<int, string>
      */
-    public static function resolve(Filesystem $disk, ?string $filePath): array
+    public static function resolve(string $filePath): array
     {
         if ($filePath === null) {
             return [];
@@ -28,8 +26,7 @@ final class SubtitleUrlResolver
             return [];
         }
 
-        $urls = [];
-        $diskPath = $disk->path('');
+        $paths = [];
 
         foreach ($matches as $candidate) {
             $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
@@ -38,10 +35,9 @@ final class SubtitleUrlResolver
                 continue;
             }
 
-            $relative = ltrim(str_replace($diskPath, '', $candidate), '/');
-            $urls[] = $disk->url($relative);
+            $paths[] = $candidate;
         }
 
-        return $urls;
+        return $paths;
     }
 }

@@ -14,3 +14,8 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 require __DIR__.'/auth.php';
+
+Route::get('/download/stream/{task}', [\App\Http\Controllers\DownloadController::class, 'stream'])
+    ->name('download.stream')
+    ->middleware('signed');
+

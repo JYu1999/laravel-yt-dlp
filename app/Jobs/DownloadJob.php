@@ -51,7 +51,7 @@ final class DownloadJob implements ShouldQueue
         // - Streaming delivery without server-side storage (see project-context.md)
         // - Automatic cleanup based on retention policy (24h anonymous, 90d registered)
         $outputDir = 'downloads/task-' . $this->task->id;
-        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
         // Ensure the file is saved INSIDE the task directory with the video title
         // We use '%(title)s' so yt-dlp names the file based on the video title.
         // YtDlpService will append .%(ext)s automatically if missing.
@@ -99,8 +99,27 @@ final class DownloadJob implements ShouldQueue
             // reconstructed from the relative path.
             $finalPath = $disk->path($relativePath);
 
-            $publicUrl = $disk->url($relativePath);
-            $subtitleUrls = SubtitleUrlResolver::resolve($disk, $finalPath);
+            // Generate Signed URL for the video
+            $signedUrl = \Illuminate\Support\Facades\URL::signedRoute(
+                'download.stream',
+                ['task' => $this->task->id, 'type' => 'video'],
+                now()->addHour()
+            );
+
+            // Resolve subtitles and generate signed URLs for them
+            $subtitlePaths = SubtitleUrlResolver::resolve($finalPath);
+            $subtitleUrls = [];
+            foreach ($subtitlePaths as $subPath) {
+                $subtitleUrls[] = \Illuminate\Support\Facades\URL::signedRoute(
+                    'download.stream',
+                    [
+                        'task' => $this->task->id,
+                        'type' => 'subtitle',
+                        'filename' => basename($subPath)
+                    ],
+                    now()->addHour()
+                );
+            }
 
             $this->task->update([
                 'status' => DownloadStatus::completed,
@@ -111,7 +130,7 @@ final class DownloadJob implements ShouldQueue
             ]);
 
             // NOTE: Currently using public URL. Post-MVP: signed URLs for secure delivery.
-            event(new DownloadCompleted($this->task, $publicUrl, $subtitleUrls));
+            event(new DownloadCompleted($this->task, $signedUrl, $subtitleUrls));
         } catch (Throwable $exception) {
             // Clean up partial downloads on failure
             $this->cleanupPartialDownload($outputPath);
