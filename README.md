@@ -146,6 +146,11 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
+**Important**: After the first deployment, you must generate the application key if you haven't already:
+```bash
+docker compose -f docker-compose.prod.yml exec app php artisan key:generate
+```
+
 ### Step 5: Verification
 
 1.  Open [https://ytd.jyu1999.com](https://ytd.jyu1999.com) in your browser.
