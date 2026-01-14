@@ -11,6 +11,8 @@ RUN apt-get update \
     python3-pip \
     curl \
     ca-certificates \
+    nodejs \
+    npm \
     && docker-php-ext-install pdo_pgsql pgsql bcmath intl pcntl \
     && pecl install redis \
     && docker-php-ext-enable redis \
