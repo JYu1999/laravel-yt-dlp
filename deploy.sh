@@ -26,6 +26,11 @@ docker compose -f docker-compose.prod.yml exec -T -u root app chmod -R 775 /var/
 echo "Installing dependencies..."
 docker compose -f docker-compose.prod.yml exec -T app composer install --no-dev --optimize-autoloader
 
+# 3.1 Build Frontend Assets
+echo "Building frontend assets..."
+docker compose -f docker-compose.prod.yml run --rm node npm install
+docker compose -f docker-compose.prod.yml run --rm node npm run build
+
 # 4. Run migrations
 echo "Running migrations..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
