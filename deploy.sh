@@ -13,9 +13,9 @@ git pull origin master
 echo "Building and starting containers..."
 docker compose -f docker-compose.prod.yml up -d --build
 
-# 3. Install dependencies (if needed, though mostly handled in Dockerfile)
-# echo "Installing dependencies..."
-# docker compose -f docker-compose.prod.yml exec -T app composer install --no-dev --optimize-autoloader
+# 3. Install dependencies
+echo "Installing dependencies..."
+docker compose -f docker-compose.prod.yml exec -T app composer install --no-dev --optimize-autoloader
 
 # 4. Run migrations
 echo "Running migrations..."
