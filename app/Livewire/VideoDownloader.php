@@ -48,6 +48,11 @@ final class VideoDownloader extends Component
     public ?string $downloadUrl = null;
 
     /**
+     * @var array<int, string>
+     */
+    public array $subtitleUrls = [];
+
+    /**
      * @return array<string, array<int, string>>
      */
     protected function rules(): array
@@ -120,6 +125,7 @@ final class VideoDownloader extends Component
             $this->progressPercentage = 0.0;
             $this->progressEta = null;
             $this->downloadUrl = null;
+            $this->subtitleUrls = [];
             $this->dispatch('download-task-created', id: $task->id);
         } catch (DownloadConcurrencyException $exception) {
             $this->downloadError = $exception->getMessage();
@@ -135,12 +141,13 @@ final class VideoDownloader extends Component
     }
 
     #[On('download-completed')]
-    public function handleDownloadCompleted(array $payload = []): void
+    public function handleDownloadCompleted(array $payload): void
     {
         $this->progressStatus = (string) ($payload['status'] ?? DownloadStatus::completed->value);
         $this->progressPercentage = 100.0;
         $this->progressEta = null;
         $this->downloadUrl = isset($payload['download_url']) ? (string) $payload['download_url'] : null;
+        $this->subtitleUrls = is_array($payload['subtitles'] ?? null) ? $payload['subtitles'] : [];
         $this->downloadNotice = 'Download completed. Your file is ready.';
         $this->downloadError = null;
     }

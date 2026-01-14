@@ -240,6 +240,8 @@ GPT-5
 - ✅ Broadcast + polling tests added (Reverb broadcast check, API status endpoint); tests: `docker compose exec app php artisan test`.
 - ✅ Fix Livewire event handlers to accept empty payloads; set browser Reverb host to localhost in `.env`.
 - ✅ Align Reverb server port for container (REVERB_SERVER_PORT) and add host fallback in Echo config.
+- ✅ UI progress bar replaced with spinner per user request.
+- ✅ Completion no longer auto-navigates; subtitle links surfaced in UI when available.
 
 ### File List
 
@@ -258,6 +260,7 @@ GPT-5
 - app/Jobs/DownloadJob.php
 - app/Livewire/VideoDownloader.php
 - app/Domain/Downloads/Models/DownloadTask.php
+- app/Domain/Downloads/Services/YtDlpService.php
 - app/Http/Controllers/Api/DownloadController.php
 - bootstrap/app.php
 - database/migrations/2026_01_14_000001_add_progress_fields_to_download_tasks_table.php
@@ -267,6 +270,9 @@ GPT-5
 - resources/js/bootstrap.js
 - resources/js/echo.js
 - resources/views/livewire/video-downloader.blade.php
+- tests/Feature/Api/DownloadStatusTest.php
+- tests/Feature/Livewire/VideoDownloaderTest.php
+- tests/Unit/Events/DownloadEventsTest.php
 - routes/channels.php
 - routes/api.php
 - tests/Feature/Broadcasting/ReverbBroadcastTest.php

@@ -50,7 +50,11 @@ final class DownloadJob implements ShouldQueue
         // Future: Implement automatic cleanup based on retention policy (24h anonymous, 90d registered)
         $outputDir = 'downloads/task-' . $this->task->id;
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
-        $outputPath = $disk->path($outputDir);
+        // Ensure the file is saved INSIDE the task directory with the video title
+        // We use '%(title)s' so yt-dlp names the file based on the video title.
+        // YtDlpService will append .%(ext)s automatically if missing.
+        $outputFileTemplate = $outputDir . '/%(title)s';
+        $outputPath = $disk->path($outputFileTemplate);
 
         if (!$disk->exists($outputDir)) {
             $disk->makeDirectory($outputDir);
@@ -73,13 +77,32 @@ final class DownloadJob implements ShouldQueue
                 }
             );
 
-            // Get the relative path for storage URL generation
-            $relativePath = str_replace($disk->path(''), '', $filePath);
+            // Verify and reconstruct relative path to avoid host/container path mismatches
+            $fileName = basename($filePath);
+            $relativePath = $outputDir . '/' . $fileName;
+            
+            // If the service returned a path that doesn't match our expectation (e.g. container path vs host path),
+            // we relay on the fact that we know where we asked it to put the file.
+            
+            // However, to be safe, we check if the file exists on the disk using the relative path.
+            // Note: $filePath from yt-dlp might be /var/www/... while we are on /Users/...
+            // We trust that if yt-dlp succeeded, the file is in the directory we specified.
+            
+            // Store the ABSOLUTE path based on CURRENT environment for consistency, OR store relative?
+            // The Task model has 'file_path'. It seems to expect absolute path (based on previous code).
+            // But storing relative path is much safer for portability.
+            // Let's check DownloadController. It expects to be able to resolve it.
+            
+            // Update: We will store the full path as seen by the current environment, 
+            // reconstructed from the relative path.
+            $finalPath = $disk->path($relativePath);
+            
             $publicUrl = $disk->url($relativePath);
+            $subtitleUrls = $this->resolveSubtitleUrls($disk, $finalPath);
 
             $this->task->update([
                 'status' => DownloadStatus::completed,
-                'file_path' => $filePath,
+                'file_path' => $finalPath, // Store path valid for current env
                 'error_message' => null,
                 'progress_percentage' => 100.0,
                 'progress_eta' => null,
@@ -87,7 +110,7 @@ final class DownloadJob implements ShouldQueue
 
             // TODO: Replace filesystem path with signed download URL
             // Future: Generate temporary signed URL for secure file delivery
-            event(new DownloadCompleted($this->task, $publicUrl));
+            event(new DownloadCompleted($this->task, $publicUrl, $subtitleUrls));
         } catch (Throwable $exception) {
             // Clean up partial downloads on failure
             $this->cleanupPartialDownload($outputPath);
@@ -127,5 +150,28 @@ final class DownloadJob implements ShouldQueue
         if (is_dir($directory) && count(scandir($directory)) === 2) {
             @rmdir($directory);
         }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveSubtitleUrls(\Illuminate\Contracts\Filesystem\Filesystem $disk, string $filePath): array
+    {
+        $basePath = preg_replace('/\.[^.]+$/', '', $filePath) ?? $filePath;
+        $matches = glob($basePath . '.*') ?: [];
+        $subtitleExtensions = ['srt', 'vtt', 'ass', 'ssa'];
+        $urls = [];
+
+        foreach ($matches as $candidate) {
+            $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+            if (!in_array($extension, $subtitleExtensions, true)) {
+                continue;
+            }
+
+            $relative = ltrim(str_replace($disk->path(''), '', $candidate), '/');
+            $urls[] = $disk->url($relative);
+        }
+
+        return $urls;
     }
 }

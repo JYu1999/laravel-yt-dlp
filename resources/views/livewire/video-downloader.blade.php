@@ -104,26 +104,35 @@
 
             @if ($taskId)
                 <div class="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
-                    <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-200">
-                        <span>Status: {{ $progressStatus ?? 'pending' }}</span>
-                        <span>{{ $progressPercentage ?? 0 }}%</span>
-                    </div>
-                    <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-                        <div
-                            class="h-full rounded-full bg-rose-500 transition-all"
-                            style="width: {{ $progressPercentage ?? 0 }}%"
-                        ></div>
-                    </div>
-                    <div class="text-xs text-zinc-400">
-                        ETA: {{ $progressEta ?? 'Calculating…' }}
+                    <div class="flex items-center gap-2 text-sm text-zinc-200">
+                        @if (($progressStatus ?? 'pending') !== 'completed' && ($progressStatus ?? 'pending') !== 'failed')
+                            <span class="h-4 w-4 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>
+                            <span>Downloading…</span>
+                        @elseif (($progressStatus ?? 'pending') === 'completed')
+                            <span>Completed</span>
+                        @else
+                            <span>Failed</span>
+                        @endif
                     </div>
                     @if ($downloadUrl)
                         <a
                             href="{{ $downloadUrl }}"
                             class="inline-flex items-center text-sm font-semibold text-rose-200 underline underline-offset-4"
                         >
-                            Download file
+                            Download video
                         </a>
+                    @endif
+                    @if ($subtitleUrls !== [])
+                        <div class="flex flex-wrap gap-3 text-sm">
+                            @foreach ($subtitleUrls as $subtitleUrl)
+                                <a
+                                    href="{{ $subtitleUrl }}"
+                                    class="inline-flex items-center text-rose-200 underline underline-offset-4"
+                                >
+                                    Download subtitles
+                                </a>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
             @endif
@@ -152,13 +161,8 @@
                 }
 
                 if (payload.status === 'completed') {
-                    Livewire.dispatch('download-completed', payload);
+                    Livewire.dispatch('download-completed', { payload: payload });
                     stopPolling();
-
-                    if (payload.download_url) {
-                        window.location.assign(payload.download_url);
-                    }
-
                     return;
                 }
 
@@ -229,11 +233,7 @@
                 });
 
                 channel.listen('.download.completed', (payload) => {
-                    Livewire.dispatch('download-completed', payload);
-
-                    if (payload.download_url) {
-                        window.location.assign(payload.download_url);
-                    }
+                    Livewire.dispatch('download-completed', { payload: payload });
                 });
 
                 channel.listen('.download.failed', (payload) => {

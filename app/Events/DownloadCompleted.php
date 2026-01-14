@@ -18,6 +18,8 @@ final class DownloadCompleted implements ShouldBroadcast
     public function __construct(
         public readonly DownloadTask $task,
         public readonly string $downloadUrl,
+        /** @var array<int, string> */
+        public readonly array $subtitles = [],
     ) {
     }
 
@@ -39,6 +41,7 @@ final class DownloadCompleted implements ShouldBroadcast
         return [
             'status' => $this->task->status?->value ?? 'completed',
             'download_url' => $this->downloadUrl,
+            'subtitles' => $this->subtitles,
         ];
     }
 }

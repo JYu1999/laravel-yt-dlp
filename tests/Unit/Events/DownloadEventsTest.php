@@ -40,7 +40,7 @@ final class DownloadEventsTest extends TestCase
         $task->id = 202;
         $task->status = DownloadStatus::completed;
 
-        $event = new DownloadCompleted($task, '/downloads/video.mp4');
+        $event = new DownloadCompleted($task, '/downloads/video.mp4', ['/downloads/video.en.srt']);
 
         self::assertInstanceOf(ShouldBroadcast::class, $event);
         self::assertSame('download.202', (string) $event->broadcastOn());
@@ -48,6 +48,7 @@ final class DownloadEventsTest extends TestCase
         self::assertSame([
             'status' => 'completed',
             'download_url' => '/downloads/video.mp4',
+            'subtitles' => ['/downloads/video.en.srt'],
         ], $event->broadcastWith());
         self::assertSame('/downloads/video.mp4', $event->downloadUrl);
     }

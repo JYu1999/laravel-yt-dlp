@@ -159,10 +159,12 @@ final class VideoDownloaderTest extends TestCase
             ->call('handleDownloadCompleted', [
                 'status' => 'completed',
                 'download_url' => '/downloads/video.mp4',
+                'subtitles' => ['/downloads/video.en.srt'],
             ])
             ->assertSet('progressStatus', 'completed')
             ->assertSet('progressPercentage', 100.0)
             ->assertSet('downloadUrl', '/downloads/video.mp4')
+            ->assertSet('subtitleUrls', ['/downloads/video.en.srt'])
             ->assertSet('downloadNotice', 'Download completed. Your file is ready.');
     }
 

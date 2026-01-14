@@ -37,7 +37,9 @@ final class DownloadJobTest extends TestCase
             'status' => DownloadStatus::pending,
         ]);
 
-        $expectedPath = storage_path('app/downloads/task-' . $task->id . '.mp4');
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $expectedPath = $disk->path('downloads/task-' . $task->id . '.mp4');
+        $expectedUrl = $disk->url('downloads/task-' . $task->id . '.mp4');
 
         $binary = $this->createFakeBinary(
             "#!/bin/sh\n" .
@@ -78,9 +80,9 @@ final class DownloadJobTest extends TestCase
                 && $event->percentage === 55.5
                 && $event->eta === '00:42';
         });
-        Event::assertDispatched(DownloadCompleted::class, function (DownloadCompleted $event) use ($task, $expectedPath): bool {
+        Event::assertDispatched(DownloadCompleted::class, function (DownloadCompleted $event) use ($task, $expectedUrl): bool {
             return $event->task->is($task)
-                && $event->downloadUrl === $expectedPath;
+                && $event->downloadUrl === $expectedUrl;
         });
         Event::assertNotDispatched(DownloadFailed::class);
 

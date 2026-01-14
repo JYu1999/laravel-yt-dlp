@@ -36,6 +36,7 @@ final class DownloadStatusTest extends TestCase
                     'eta' => '00:20',
                     'download_url' => null,
                     'error' => null,
+                    'subtitles' => [],
                 ],
             ]);
     }
