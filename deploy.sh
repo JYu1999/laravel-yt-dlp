@@ -13,6 +13,11 @@ git pull origin master
 echo "Building and starting containers..."
 docker compose -f docker-compose.prod.yml up -d --build
 
+# 2.1 Fix Permissions
+echo "Fixing permissions..."
+docker compose -f docker-compose.prod.yml exec -T -u root app chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+docker compose -f docker-compose.prod.yml exec -T -u root app chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 # 3. Install dependencies
 echo "Installing dependencies..."
 docker compose -f docker-compose.prod.yml exec -T app composer install --no-dev --optimize-autoloader
