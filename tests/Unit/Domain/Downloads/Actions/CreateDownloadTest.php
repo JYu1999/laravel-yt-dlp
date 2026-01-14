@@ -90,4 +90,60 @@ final class CreateDownloadTest extends TestCase
             userId: null,
         );
     }
+
+    public function testItBlocksDownloadWhenSystemReachesMaxConcurrency(): void
+    {
+        Queue::fake();
+
+        // Create 10 active downloads (system limit)
+        for ($i = 1; $i <= 10; $i++) {
+            DownloadTask::create([
+                'user_id' => null,
+                'ip_address' => '192.168.0.' . $i,
+                'video_url' => 'https://example.com/video-' . $i,
+                'format' => 'mp4',
+                'status' => $i % 2 === 0 ? DownloadStatus::pending : DownloadStatus::downloading,
+            ]);
+        }
+
+        $action = new CreateDownload();
+
+        $this->expectException(DownloadConcurrencyException::class);
+        $this->expectExceptionMessage('System is at maximum capacity. Please try again later.');
+
+        $action->handle(
+            url: 'https://example.com/video-11',
+            format: 'mp4',
+            ipAddress: '192.168.0.99',
+            userId: null,
+        );
+    }
+
+    public function testItAllowsDownloadWhenSystemBelowMaxConcurrency(): void
+    {
+        Queue::fake();
+
+        // Create 9 active downloads (below system limit)
+        for ($i = 1; $i <= 9; $i++) {
+            DownloadTask::create([
+                'user_id' => null,
+                'ip_address' => '192.168.0.' . $i,
+                'video_url' => 'https://example.com/video-' . $i,
+                'format' => 'mp4',
+                'status' => DownloadStatus::downloading,
+            ]);
+        }
+
+        $action = new CreateDownload();
+
+        $task = $action->handle(
+            url: 'https://example.com/video-10',
+            format: 'mp4',
+            ipAddress: '192.168.0.99',
+            userId: null,
+        );
+
+        self::assertSame(DownloadStatus::pending, $task->status);
+        self::assertSame('https://example.com/video-10', $task->video_url);
+    }
 }

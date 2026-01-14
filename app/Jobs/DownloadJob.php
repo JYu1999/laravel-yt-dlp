@@ -41,11 +41,14 @@ final class DownloadJob implements ShouldQueue
             'status' => DownloadStatus::downloading,
         ]);
 
+        // TODO: Temporary file persistence for MVP
+        // Future: Implement streaming delivery without server-side storage (see project-context.md)
+        // Future: Implement automatic cleanup based on retention policy (24h anonymous, 90d registered)
         $outputPath = storage_path('app/downloads/task-' . $this->task->id);
         $directory = dirname($outputPath);
 
         if (!is_dir($directory)) {
-            mkdir($directory, 0775, true);
+            mkdir($directory, 0755, true);
         }
 
         try {
@@ -67,14 +70,43 @@ final class DownloadJob implements ShouldQueue
                 'error_message' => null,
             ]);
 
+            // TODO: Replace filesystem path with signed download URL
+            // Future: Generate temporary signed URL for secure file delivery
             event(new DownloadCompleted($this->task, $filePath));
         } catch (Throwable $exception) {
+            // Clean up partial downloads on failure
+            $this->cleanupPartialDownload($outputPath);
+
             $this->task->update([
                 'status' => DownloadStatus::failed,
                 'error_message' => $exception->getMessage(),
             ]);
 
             event(new DownloadFailed($this->task, $exception->getMessage()));
+        }
+    }
+
+    private function cleanupPartialDownload(string $basePath): void
+    {
+        $directory = dirname($basePath);
+
+        // Clean up all files matching the pattern (video + subtitles)
+        $pattern = str_replace(['%(ext)s', '.%(ext)s'], '', $basePath);
+        $files = glob($pattern . '*');
+
+        if ($files === false) {
+            return;
+        }
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+
+        // Remove directory if empty
+        if (is_dir($directory) && count(scandir($directory)) === 2) {
+            @rmdir($directory);
         }
     }
 }

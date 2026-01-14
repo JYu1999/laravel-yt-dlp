@@ -76,7 +76,6 @@ final class VideoDownloader extends Component
             $metadata['estimated_filesize'] = $this->formatBytes($this->resolveEstimatedFilesize($metadata['formats'] ?? []));
 
             $this->metadata = $metadata;
-            $this->metadata = $metadata;
             $this->selectedLanguage = $this->resolveDefaultSubtitleLanguage($metadata['subtitles'] ?? []);
         } catch (RuntimeException $exception) {
             $message = $exception->getMessage();

@@ -31,6 +31,16 @@ final class CreateDownload
 
     public function checkConcurrency(string $ipAddress, ?int $userId): void
     {
+        // Check system-wide concurrency limit (max 10 concurrent downloads)
+        $systemActiveCount = DownloadTask::query()
+            ->whereIn('status', [DownloadStatus::pending, DownloadStatus::downloading])
+            ->count();
+
+        if ($systemActiveCount >= 10) {
+            throw new DownloadConcurrencyException('System is at maximum capacity. Please try again later.');
+        }
+
+        // Check per-user concurrency limit (max 1 concurrent download)
         $query = DownloadTask::query()
             ->whereIn('status', [DownloadStatus::pending, DownloadStatus::downloading]);
 

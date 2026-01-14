@@ -1,6 +1,6 @@
 # Story 1.6: Queue System & Download Job
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -98,6 +98,7 @@ so that the user interface remains responsive and the system can handle multiple
 ## Change Log
 
 - 2026-01-14: Implemented queue-backed download flow with tasks, events, job, concurrency checks, and Livewire integration; added tests.
+- 2026-01-14: Code review fixes - Added system-wide concurrency limit (max 10), cleanup on failure, user relationship, TODO comments for future improvements.
 
 ## Dev Agent Record
 
@@ -119,6 +120,14 @@ GPT-5
 - Implemented `DownloadJob` with status transitions, progress/completion/failure events, and updated `YtDlpService` to parse progress output (phpunit in Docker).
 - Added `CreateDownload` action with per-user/IP concurrency checks, plus unit tests (phpunit in Docker).
 - Updated Livewire downloader to dispatch jobs, surface concurrency errors, and store task IDs; added feature tests (phpunit in Docker).
+- **Code Review (2026-01-14):** Fixed 3 HIGH + 4 MEDIUM + 3 LOW issues:
+  - HIGH: Implemented system-wide concurrency limit (max 10 concurrent downloads) in CreateDownload action
+  - HIGH: Added comprehensive tests for system-level concurrency (testItBlocksDownloadWhenSystemReachesMaxConcurrency, testItAllowsDownloadWhenSystemBelowMaxConcurrency)
+  - MEDIUM: Added cleanup logic in DownloadJob to remove partial files on failure (cleanupPartialDownload method)
+  - LOW: Removed duplicate metadata assignment in VideoDownloader
+  - LOW: Added user() relationship to DownloadTask model
+  - LOW: Changed directory permissions from 0775 to 0755 for better security
+  - Added TODO comments for future improvements: streaming delivery, signed URLs, automatic cleanup based on retention policy
 
 ### File List
 
