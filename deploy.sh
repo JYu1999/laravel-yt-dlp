@@ -31,6 +31,11 @@ echo "Building frontend assets..."
 docker compose -f docker-compose.prod.yml run --rm node npm install
 docker compose -f docker-compose.prod.yml run --rm node npm run build
 
+# 3.2 Fix Permissions (Again) to ensure build files are owned by www-data
+echo "Fixing permissions for build assets..."
+docker compose -f docker-compose.prod.yml exec -T -u root app chown -R www-data:www-data /var/www/html/public/build
+
+
 # 4. Run migrations
 echo "Running migrations..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
