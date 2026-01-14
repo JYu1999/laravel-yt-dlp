@@ -70,6 +70,8 @@ final class DownloadJobTest extends TestCase
 
         self::assertSame(DownloadStatus::completed, $task->status);
         self::assertSame($expectedPath, $task->file_path);
+        self::assertSame(100.0, $task->progress_percentage);
+        self::assertNull($task->progress_eta);
 
         Event::assertDispatched(DownloadProgressUpdated::class, function (DownloadProgressUpdated $event) use ($task): bool {
             return $event->task->is($task)
@@ -113,11 +115,13 @@ final class DownloadJobTest extends TestCase
         $task->refresh();
 
         self::assertSame(DownloadStatus::failed, $task->status);
-        self::assertSame('yt-dlp command failed', $task->error_message);
+        self::assertSame('Download failed. Please try again.', $task->error_message);
+        self::assertNull($task->progress_percentage);
+        self::assertNull($task->progress_eta);
 
         Event::assertDispatched(DownloadFailed::class, function (DownloadFailed $event) use ($task): bool {
             return $event->task->is($task)
-                && $event->error === 'yt-dlp command failed';
+                && $event->error === 'Download failed. Please try again.';
         });
         Event::assertNotDispatched(DownloadCompleted::class);
     }

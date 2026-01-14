@@ -26,4 +26,21 @@ final class DownloadProgressUpdated implements ShouldBroadcast
     {
         return new Channel('download.' . $this->task->id);
     }
+
+    public function broadcastAs(): string
+    {
+        return 'download.progress.updated';
+    }
+
+    /**
+     * @return array<string, float|string>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'status' => $this->task->status?->value ?? 'pending',
+            'percentage' => $this->percentage,
+            'eta' => $this->eta,
+        ];
+    }
 }

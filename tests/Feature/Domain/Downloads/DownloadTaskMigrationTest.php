@@ -26,6 +26,8 @@ final class DownloadTaskMigrationTest extends TestCase
             'title',
             'meta_data',
             'error_message',
+            'progress_percentage',
+            'progress_eta',
             'created_at',
             'updated_at',
         ]));

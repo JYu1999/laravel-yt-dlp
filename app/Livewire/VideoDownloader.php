@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Domain\Downloads\DTO\VideoMetadata;
 use App\Domain\Downloads\Actions\CreateDownload;
+use App\Domain\Downloads\DTO\VideoMetadata;
+use App\Domain\Downloads\Enums\DownloadStatus;
 use App\Domain\Downloads\Exceptions\DownloadConcurrencyException;
 use App\Domain\Downloads\Services\VideoInfoService;
 use App\Http\Requests\VideoInfoRequest;
 use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use RuntimeException;
 
@@ -36,6 +38,14 @@ final class VideoDownloader extends Component
     public ?string $downloadError = null;
 
     public ?int $taskId = null;
+
+    public ?string $progressStatus = null;
+
+    public ?float $progressPercentage = null;
+
+    public ?string $progressEta = null;
+
+    public ?string $downloadUrl = null;
 
     /**
      * @return array<string, array<int, string>>
@@ -106,9 +116,40 @@ final class VideoDownloader extends Component
 
             $this->taskId = $task->id;
             $this->downloadNotice = 'Download started. Task ID: ' . $task->id;
+            $this->progressStatus = DownloadStatus::pending->value;
+            $this->progressPercentage = 0.0;
+            $this->progressEta = null;
+            $this->downloadUrl = null;
+            $this->dispatch('download-task-created', id: $task->id);
         } catch (DownloadConcurrencyException $exception) {
             $this->downloadError = $exception->getMessage();
         }
+    }
+
+    #[On('download-progress-updated')]
+    public function handleProgressUpdated(array $payload = []): void
+    {
+        $this->progressStatus = (string) ($payload['status'] ?? DownloadStatus::downloading->value);
+        $this->progressPercentage = isset($payload['percentage']) ? (float) $payload['percentage'] : $this->progressPercentage;
+        $this->progressEta = isset($payload['eta']) ? (string) $payload['eta'] : null;
+    }
+
+    #[On('download-completed')]
+    public function handleDownloadCompleted(array $payload = []): void
+    {
+        $this->progressStatus = (string) ($payload['status'] ?? DownloadStatus::completed->value);
+        $this->progressPercentage = 100.0;
+        $this->progressEta = null;
+        $this->downloadUrl = isset($payload['download_url']) ? (string) $payload['download_url'] : null;
+        $this->downloadNotice = 'Download completed. Your file is ready.';
+        $this->downloadError = null;
+    }
+
+    #[On('download-failed')]
+    public function handleDownloadFailed(array $payload = []): void
+    {
+        $this->progressStatus = (string) ($payload['status'] ?? DownloadStatus::failed->value);
+        $this->downloadError = isset($payload['error']) ? (string) $payload['error'] : 'Download failed. Please try again.';
     }
 
     public function updatedDownloadSubtitles(bool $value): void

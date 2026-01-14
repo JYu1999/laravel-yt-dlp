@@ -24,6 +24,8 @@ final class DownloadJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    private const USER_FACING_ERROR_MESSAGE = 'Download failed. Please try again.';
+
     /**
      * The number of seconds the job can run before timing out.
      *
@@ -39,16 +41,19 @@ final class DownloadJob implements ShouldQueue
     {
         $this->task->update([
             'status' => DownloadStatus::downloading,
+            'progress_percentage' => 0.0,
+            'progress_eta' => null,
         ]);
 
         // TODO: Temporary file persistence for MVP
         // Future: Implement streaming delivery without server-side storage (see project-context.md)
         // Future: Implement automatic cleanup based on retention policy (24h anonymous, 90d registered)
-        $outputPath = storage_path('app/downloads/task-' . $this->task->id);
-        $directory = dirname($outputPath);
+        $outputDir = 'downloads/task-' . $this->task->id;
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $outputPath = $disk->path($outputDir);
 
-        if (!is_dir($directory)) {
-            mkdir($directory, 0755, true);
+        if (!$disk->exists($outputDir)) {
+            $disk->makeDirectory($outputDir);
         }
 
         try {
@@ -60,29 +65,43 @@ final class DownloadJob implements ShouldQueue
                 format: $this->task->format,
                 options: $options,
                 onProgress: function (float $percentage, string $eta): void {
+                    $this->task->update([
+                        'progress_percentage' => $percentage,
+                        'progress_eta' => $eta,
+                    ]);
                     event(new DownloadProgressUpdated($this->task, $percentage, $eta));
                 }
             );
+
+            // Get the relative path for storage URL generation
+            $relativePath = str_replace($disk->path(''), '', $filePath);
+            $publicUrl = $disk->url($relativePath);
 
             $this->task->update([
                 'status' => DownloadStatus::completed,
                 'file_path' => $filePath,
                 'error_message' => null,
+                'progress_percentage' => 100.0,
+                'progress_eta' => null,
             ]);
 
             // TODO: Replace filesystem path with signed download URL
             // Future: Generate temporary signed URL for secure file delivery
-            event(new DownloadCompleted($this->task, $filePath));
+            event(new DownloadCompleted($this->task, $publicUrl));
         } catch (Throwable $exception) {
             // Clean up partial downloads on failure
             $this->cleanupPartialDownload($outputPath);
 
+            $errorMessage = self::USER_FACING_ERROR_MESSAGE;
+
             $this->task->update([
                 'status' => DownloadStatus::failed,
-                'error_message' => $exception->getMessage(),
+                'error_message' => $errorMessage,
+                'progress_percentage' => null,
+                'progress_eta' => null,
             ]);
 
-            event(new DownloadFailed($this->task, $exception->getMessage()));
+            event(new DownloadFailed($this->task, $errorMessage));
         }
     }
 

@@ -25,4 +25,20 @@ final class DownloadCompleted implements ShouldBroadcast
     {
         return new Channel('download.' . $this->task->id);
     }
+
+    public function broadcastAs(): string
+    {
+        return 'download.completed';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'status' => $this->task->status?->value ?? 'completed',
+            'download_url' => $this->downloadUrl,
+        ];
+    }
 }

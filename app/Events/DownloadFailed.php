@@ -25,4 +25,20 @@ final class DownloadFailed implements ShouldBroadcast
     {
         return new Channel('download.' . $this->task->id);
     }
+
+    public function broadcastAs(): string
+    {
+        return 'download.failed';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'status' => $this->task->status?->value ?? 'failed',
+            'error' => $this->error,
+        ];
+    }
 }

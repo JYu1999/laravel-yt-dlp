@@ -137,4 +137,44 @@ final class VideoDownloaderTest extends TestCase
             ->assertSet('downloadError', 'You already have an active download in progress.')
             ->assertSet('taskId', null);
     }
+
+    public function testItUpdatesProgressFromBroadcastPayload(): void
+    {
+        Livewire::test(VideoDownloader::class)
+            ->set('taskId', 10)
+            ->call('handleProgressUpdated', [
+                'status' => 'downloading',
+                'percentage' => 22.5,
+                'eta' => '00:30',
+            ])
+            ->assertSet('progressStatus', 'downloading')
+            ->assertSet('progressPercentage', 22.5)
+            ->assertSet('progressEta', '00:30');
+    }
+
+    public function testItMarksDownloadCompletedFromBroadcastPayload(): void
+    {
+        Livewire::test(VideoDownloader::class)
+            ->set('taskId', 11)
+            ->call('handleDownloadCompleted', [
+                'status' => 'completed',
+                'download_url' => '/downloads/video.mp4',
+            ])
+            ->assertSet('progressStatus', 'completed')
+            ->assertSet('progressPercentage', 100.0)
+            ->assertSet('downloadUrl', '/downloads/video.mp4')
+            ->assertSet('downloadNotice', 'Download completed. Your file is ready.');
+    }
+
+    public function testItMarksDownloadFailedFromBroadcastPayload(): void
+    {
+        Livewire::test(VideoDownloader::class)
+            ->set('taskId', 12)
+            ->call('handleDownloadFailed', [
+                'status' => 'failed',
+                'error' => 'Download failed. Please try again.',
+            ])
+            ->assertSet('progressStatus', 'failed')
+            ->assertSet('downloadError', 'Download failed. Please try again.');
+    }
 }

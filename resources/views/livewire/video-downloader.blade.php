@@ -101,6 +101,160 @@
                     Preparing download…
                 </div>
             </div>
+
+            @if ($taskId)
+                <div class="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-200">
+                        <span>Status: {{ $progressStatus ?? 'pending' }}</span>
+                        <span>{{ $progressPercentage ?? 0 }}%</span>
+                    </div>
+                    <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+                        <div
+                            class="h-full rounded-full bg-rose-500 transition-all"
+                            style="width: {{ $progressPercentage ?? 0 }}%"
+                        ></div>
+                    </div>
+                    <div class="text-xs text-zinc-400">
+                        ETA: {{ $progressEta ?? 'Calculating…' }}
+                    </div>
+                    @if ($downloadUrl)
+                        <a
+                            href="{{ $downloadUrl }}"
+                            class="inline-flex items-center text-sm font-semibold text-rose-200 underline underline-offset-4"
+                        >
+                            Download file
+                        </a>
+                    @endif
+                </div>
+            @endif
         </div>
     @endif
 </div>
+
+@once
+    <script>
+        document.addEventListener('livewire:init', () => {
+            let activeChannelName = null;
+            let pollingTimer = null;
+            let pollingTaskId = null;
+
+            const stopPolling = () => {
+                if (pollingTimer) {
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    pollingTaskId = null;
+                }
+            };
+
+            const handlePollingPayload = (payload) => {
+                if (!payload || !payload.status) {
+                    return;
+                }
+
+                if (payload.status === 'completed') {
+                    Livewire.dispatch('download-completed', payload);
+                    stopPolling();
+
+                    if (payload.download_url) {
+                        window.location.assign(payload.download_url);
+                    }
+
+                    return;
+                }
+
+                if (payload.status === 'failed') {
+                    Livewire.dispatch('download-failed', payload);
+                    stopPolling();
+                    return;
+                }
+
+                Livewire.dispatch('download-progress-updated', payload);
+            };
+
+            const fetchStatus = async (taskId) => {
+                try {
+                    const response = await fetch(`/api/downloads/${taskId}`, {
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    handlePollingPayload(payload.data);
+                } catch (error) {
+                    // Keep polling on transient failures.
+                }
+            };
+
+            const startPolling = (taskId) => {
+                if (!taskId) {
+                    return;
+                }
+
+                if (pollingTaskId === taskId) {
+                    return;
+                }
+
+                stopPolling();
+                pollingTaskId = taskId;
+
+                fetchStatus(taskId);
+                pollingTimer = window.setInterval(() => fetchStatus(taskId), 2000);
+            };
+
+            const subscribeToTask = (taskId) => {
+                if (!window.Echo || !taskId) {
+                    startPolling(taskId);
+                    return;
+                }
+
+                const channelName = `download.${taskId}`;
+
+                if (activeChannelName === channelName) {
+                    return;
+                }
+
+                if (activeChannelName) {
+                    window.Echo.leave(activeChannelName);
+                }
+
+                const channel = window.Echo.channel(channelName);
+
+                channel.listen('.download.progress.updated', (payload) => {
+                    Livewire.dispatch('download-progress-updated', payload);
+                });
+
+                channel.listen('.download.completed', (payload) => {
+                    Livewire.dispatch('download-completed', payload);
+
+                    if (payload.download_url) {
+                        window.location.assign(payload.download_url);
+                    }
+                });
+
+                channel.listen('.download.failed', (payload) => {
+                    Livewire.dispatch('download-failed', payload);
+                });
+
+                activeChannelName = channelName;
+
+                const pusher = window.Echo.connector?.pusher;
+
+                if (pusher) {
+                    const fallback = () => startPolling(taskId);
+                    pusher.connection.bind('error', fallback);
+                    pusher.connection.bind('disconnected', fallback);
+                    pusher.connection.bind('unavailable', fallback);
+                }
+            };
+
+            Livewire.on('download-task-created', ({ id }) => {
+                subscribeToTask(id);
+            });
+        });
+    </script>
+@endonce

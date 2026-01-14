@@ -97,7 +97,7 @@ final class DockerComposeTest extends TestCase
         $this->assertStringContainsString('CACHE_STORE=redis', $envContents);
         $this->assertStringContainsString('QUEUE_CONNECTION=redis', $envContents);
         $this->assertStringContainsString('SESSION_DRIVER=redis', $envContents);
-        $this->assertStringContainsString('REVERB_HOST=0.0.0.0', $envContents);
+        $this->assertStringContainsString('REVERB_HOST=reverb', $envContents);
 
         $this->assertStringContainsString('DB_CONNECTION=pgsql', $exampleContents);
         $this->assertStringContainsString('DB_HOST=db', $exampleContents);
@@ -106,6 +106,28 @@ final class DockerComposeTest extends TestCase
         $this->assertStringContainsString('CACHE_STORE=redis', $exampleContents);
         $this->assertStringContainsString('QUEUE_CONNECTION=redis', $exampleContents);
         $this->assertStringContainsString('SESSION_DRIVER=redis', $exampleContents);
-        $this->assertStringContainsString('REVERB_HOST=0.0.0.0', $exampleContents);
+        $this->assertStringContainsString('REVERB_HOST=reverb', $exampleContents);
+    }
+
+    public function testEnvExampleIncludesReverbBroadcastSettings(): void
+    {
+        $examplePath = base_path('.env.example');
+
+        $this->assertFileExists($examplePath);
+
+        $exampleContents = file_get_contents($examplePath);
+
+        $this->assertNotFalse($exampleContents);
+        $this->assertStringContainsString('BROADCAST_CONNECTION=reverb', $exampleContents);
+        $this->assertStringContainsString('REVERB_APP_ID=', $exampleContents);
+        $this->assertStringContainsString('REVERB_APP_KEY=', $exampleContents);
+        $this->assertStringContainsString('REVERB_APP_SECRET=', $exampleContents);
+        $this->assertStringContainsString('REVERB_HOST=', $exampleContents);
+        $this->assertStringContainsString('REVERB_PORT=', $exampleContents);
+        $this->assertStringContainsString('REVERB_SCHEME=', $exampleContents);
+        $this->assertStringContainsString('VITE_REVERB_APP_KEY=', $exampleContents);
+        $this->assertStringContainsString('VITE_REVERB_HOST=', $exampleContents);
+        $this->assertStringContainsString('VITE_REVERB_PORT=', $exampleContents);
+        $this->assertStringContainsString('VITE_REVERB_SCHEME=', $exampleContents);
     }
 }

@@ -28,6 +28,8 @@ final class DownloadTask extends Model
         'title',
         'meta_data',
         'error_message',
+        'progress_percentage',
+        'progress_eta',
     ];
 
     /**
@@ -38,6 +40,7 @@ final class DownloadTask extends Model
         return [
             'meta_data' => 'array',
             'status' => DownloadStatus::class,
+            'progress_percentage' => 'float',
         ];
     }
 
