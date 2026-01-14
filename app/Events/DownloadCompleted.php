@@ -34,7 +34,7 @@ final class DownloadCompleted implements ShouldBroadcast
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string|array<int, string>>
      */
     public function broadcastWith(): array
     {

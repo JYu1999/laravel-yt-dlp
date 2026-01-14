@@ -102,16 +102,18 @@ final class VideoDownloaderTest extends TestCase
     {
         Queue::fake();
 
-        Livewire::test(VideoDownloader::class)
+        $component = Livewire::test(VideoDownloader::class)
             ->set('url', 'https://example.com/video')
             ->set('metadata', [
                 'formats' => [
                     ['format_id' => '22', 'ext' => 'mp4'],
                 ],
             ])
-            ->call('startDownload')
-            ->assertSet('taskId', 1)
-            ->assertSet('downloadNotice', 'Download started. Task ID: 1');
+            ->call('startDownload');
+
+        $taskId = $component->get('taskId');
+        self::assertNotNull($taskId);
+        $component->assertSet('downloadNotice', 'Download started. Task ID: ' . $taskId);
     }
 
     public function testItShowsConcurrencyError(): void

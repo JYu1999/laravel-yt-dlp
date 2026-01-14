@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Domain\Downloads\Enums\DownloadStatus;
 use App\Domain\Downloads\Models\DownloadTask;
 use App\Domain\Downloads\Services\YtDlpService;
+use App\Domain\Downloads\Support\SubtitleUrlResolver;
 use App\Events\DownloadCompleted;
 use App\Events\DownloadFailed;
 use App\Events\DownloadProgressUpdated;
@@ -45,9 +46,10 @@ final class DownloadJob implements ShouldQueue
             'progress_eta' => null,
         ]);
 
-        // TODO: Temporary file persistence for MVP
-        // Future: Implement streaming delivery without server-side storage (see project-context.md)
-        // Future: Implement automatic cleanup based on retention policy (24h anonymous, 90d registered)
+        // NOTE: MVP uses temporary file persistence on disk.
+        // Post-MVP enhancements tracked in backlog:
+        // - Streaming delivery without server-side storage (see project-context.md)
+        // - Automatic cleanup based on retention policy (24h anonymous, 90d registered)
         $outputDir = 'downloads/task-' . $this->task->id;
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
         // Ensure the file is saved INSIDE the task directory with the video title
@@ -96,9 +98,9 @@ final class DownloadJob implements ShouldQueue
             // Update: We will store the full path as seen by the current environment, 
             // reconstructed from the relative path.
             $finalPath = $disk->path($relativePath);
-            
+
             $publicUrl = $disk->url($relativePath);
-            $subtitleUrls = $this->resolveSubtitleUrls($disk, $finalPath);
+            $subtitleUrls = SubtitleUrlResolver::resolve($disk, $finalPath);
 
             $this->task->update([
                 'status' => DownloadStatus::completed,
@@ -108,8 +110,7 @@ final class DownloadJob implements ShouldQueue
                 'progress_eta' => null,
             ]);
 
-            // TODO: Replace filesystem path with signed download URL
-            // Future: Generate temporary signed URL for secure file delivery
+            // NOTE: Currently using public URL. Post-MVP: signed URLs for secure delivery.
             event(new DownloadCompleted($this->task, $publicUrl, $subtitleUrls));
         } catch (Throwable $exception) {
             // Clean up partial downloads on failure
@@ -152,26 +153,4 @@ final class DownloadJob implements ShouldQueue
         }
     }
 
-    /**
-     * @return array<int, string>
-     */
-    private function resolveSubtitleUrls(\Illuminate\Contracts\Filesystem\Filesystem $disk, string $filePath): array
-    {
-        $basePath = preg_replace('/\.[^.]+$/', '', $filePath) ?? $filePath;
-        $matches = glob($basePath . '.*') ?: [];
-        $subtitleExtensions = ['srt', 'vtt', 'ass', 'ssa'];
-        $urls = [];
-
-        foreach ($matches as $candidate) {
-            $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
-            if (!in_array($extension, $subtitleExtensions, true)) {
-                continue;
-            }
-
-            $relative = ltrim(str_replace($disk->path(''), '', $candidate), '/');
-            $urls[] = $disk->url($relative);
-        }
-
-        return $urls;
-    }
 }

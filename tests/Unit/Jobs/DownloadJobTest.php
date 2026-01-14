@@ -38,8 +38,10 @@ final class DownloadJobTest extends TestCase
         ]);
 
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
-        $expectedPath = $disk->path('downloads/task-' . $task->id . '.mp4');
-        $expectedUrl = $disk->url('downloads/task-' . $task->id . '.mp4');
+        $outputDir = 'downloads/task-' . $task->id;
+        $videoFileName = 'Test Video.mp4';
+        $expectedPath = $disk->path($outputDir . '/' . $videoFileName);
+        $expectedUrl = $disk->url($outputDir . '/' . $videoFileName);
 
         $binary = $this->createFakeBinary(
             "#!/bin/sh\n" .
@@ -58,7 +60,9 @@ final class DownloadJobTest extends TestCase
             "fi\n" .
             "\n" .
             "echo \"[download] 55.5% of 10.00MiB at 1.00MiB/s ETA 00:42\"\n" .
-            "resolved=\$(echo \"\$output\" | sed 's/%(ext)s/mp4/')\n" .
+            "# Resolve %(title)s to 'Test Video' and %(ext)s to 'mp4'\n" .
+            "resolved=\$(echo \"\$output\" | sed 's/%(title)s/Test Video/' | sed 's/%(ext)s/mp4/')\n" .
+            "mkdir -p \$(dirname \"\$resolved\")\n" .
             "touch \"\$resolved\"\n" .
             "echo \"\$resolved\"\n" .
             "exit 0\n"
@@ -86,8 +90,13 @@ final class DownloadJobTest extends TestCase
         });
         Event::assertNotDispatched(DownloadFailed::class);
 
+        // Clean up created files and directory
         if (file_exists($expectedPath)) {
             unlink($expectedPath);
+        }
+        $taskDir = $disk->path($outputDir);
+        if (is_dir($taskDir)) {
+            @rmdir($taskDir);
         }
     }
 

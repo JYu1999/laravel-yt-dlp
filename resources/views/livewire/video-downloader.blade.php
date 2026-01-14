@@ -249,6 +249,7 @@
                     pusher.connection.bind('error', fallback);
                     pusher.connection.bind('disconnected', fallback);
                     pusher.connection.bind('unavailable', fallback);
+                    pusher.connection.bind('connected', stopPolling);
                 }
             };
 

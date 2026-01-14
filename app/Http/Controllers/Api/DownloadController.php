@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Domain\Downloads\Models\DownloadTask;
+use App\Domain\Downloads\Support\SubtitleUrlResolver;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 final class DownloadController
 {
@@ -22,6 +24,8 @@ final class DownloadController
             ], 404);
         }
 
+        $disk = Storage::disk('public');
+
         return response()->json([
             'data' => [
                 'id' => $task->id,
@@ -30,53 +34,20 @@ final class DownloadController
                 'eta' => $task->progress_eta,
                 'download_url' => $this->resolveDownloadUrl($task->file_path),
                 'error' => $task->error_message,
-                'subtitles' => $this->resolveSubtitleUrls($task->file_path),
+                'subtitles' => SubtitleUrlResolver::resolve($disk, $task->file_path),
             ],
         ]);
     }
 
-    /**
-     * @return array<int, string>
-     */
-    private function resolveSubtitleUrls(?string $filePath): array
-    {
-        if ($filePath === null) {
-            return [];
-        }
-
-        $disk = \Illuminate\Support\Facades\Storage::disk('public');
-        $basePath = preg_replace('/\.[^.]+$/', '', $filePath) ?? $filePath;
-        $matches = glob($basePath . '.*') ?: [];
-        $subtitleExtensions = ['srt', 'vtt', 'ass', 'ssa'];
-        $urls = [];
-
-        foreach ($matches as $candidate) {
-            $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
-            if (!in_array($extension, $subtitleExtensions, true)) {
-                continue;
-            }
-
-            $relative = ltrim(str_replace($disk->path(''), '', $candidate), '/');
-            $urls[] = $disk->url($relative);
-        }
-
-        return $urls;
-    }
     private function resolveDownloadUrl(?string $filePath): ?string
     {
         if ($filePath === null) {
             return null;
         }
 
-        $disk = \Illuminate\Support\Facades\Storage::disk('public');
-        
-        // If file doesn't exist on disk, we can't serve it.
-        // However, we still return the URL if the file path is set, 
-        // to avoid race conditions or if checking existence is too slow.
-        // But strictly for path conversion:
-        
+        $disk = Storage::disk('public');
         $relativePath = ltrim(str_replace($disk->path(''), '', $filePath), '/');
-        
+
         return $disk->url($relativePath);
     }
 }

@@ -1,6 +1,6 @@
 # Story 1.7: Reverb Real-Time Progress
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -215,6 +215,7 @@ reverb:
 
 - 2026-01-14: Story created by SM Agent - comprehensive context analysis completed
 - 2026-01-14: Dev implementation completed (Reverb config, Echo UI, polling fallback, tests)
+- 2026-01-14: Code review fixes applied - 10 issues resolved (test fixes, type annotations, DRY refactor, strict_types)
 
 ## Dev Agent Record
 
@@ -254,35 +255,29 @@ GPT-5
 - config/reverb.php
 - _bmad-output/implementation-artifacts/1-7-reverb-real-time-progress.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- app/Domain/Downloads/Models/DownloadTask.php
+- app/Domain/Downloads/Support/SubtitleUrlResolver.php
 - app/Events/DownloadCompleted.php
 - app/Events/DownloadFailed.php
 - app/Events/DownloadProgressUpdated.php
+- app/Http/Controllers/Api/DownloadController.php
 - app/Jobs/DownloadJob.php
 - app/Livewire/VideoDownloader.php
-- app/Domain/Downloads/Models/DownloadTask.php
-- app/Domain/Downloads/Services/YtDlpService.php
-- app/Http/Controllers/Api/DownloadController.php
-- bootstrap/app.php
 - database/migrations/2026_01_14_000001_add_progress_fields_to_download_tasks_table.php
-- .env
 - package.json
 - package-lock.json
 - resources/js/bootstrap.js
 - resources/js/echo.js
 - resources/views/livewire/video-downloader.blade.php
-- tests/Feature/Api/DownloadStatusTest.php
-- tests/Feature/Livewire/VideoDownloaderTest.php
-- tests/Unit/Events/DownloadEventsTest.php
-- routes/channels.php
 - routes/api.php
+- routes/channels.php
+- tests/Feature/Api/DownloadStatusTest.php
 - tests/Feature/Broadcasting/ReverbBroadcastTest.php
+- tests/Feature/Domain/Downloads/DownloadTaskMigrationTest.php
 - tests/Feature/Infrastructure/BroadcastChannelsTest.php
 - tests/Feature/Infrastructure/BroadcastingConfigTest.php
 - tests/Feature/Infrastructure/DockerComposeTest.php
 - tests/Feature/Infrastructure/FrontendEchoConfigTest.php
-- tests/Feature/Api/DownloadStatusTest.php
-- tests/Feature/Domain/Downloads/DownloadTaskMigrationTest.php
 - tests/Feature/Livewire/VideoDownloaderTest.php
-- tests/Unit/Jobs/DownloadJobTest.php
 - tests/Unit/Events/DownloadEventsTest.php
 - tests/Unit/Jobs/DownloadJobTest.php
